@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Tools Pro - Manajemen Lot & Jurnal</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .container {
+            background-color: var(--card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 850px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .header-avg { color: var(--secondary); }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+        }
+        .row-group {
+            display: flex;
+            gap: 10px;
+        }
+        .row-group .input-group { flex: 1; }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #475569;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        input[type="text"] { text-transform: uppercase; }
+        .results-section {
+            background-color: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .result-box {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .result-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 5px;
+        }
+        .fee-info {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+        .val-avg { color: var(--secondary); }
+        .val-danger { color: var(--danger); }
+        .highlight {
+            background-color: #dbeafe;
+            border-color: var(--primary);
+        }
+        .highlight-avg {
+            background-color: #d1fae5;
+            border-color: var(--secondary);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #1d4ed8; }
+        @media (max-width: 650px) {
+            .grid, .results-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>📊 Kalkulator Lot & Jurnal Trading</h2>
+        <div class="grid">
+            <div>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>Total Modal (Rp)</label>
+                        <input type="number" id="modal" value="10000000" oninput="calculateRisk()">
+                    </div>
+                    <div class="input-group">
+                        <label>Risiko / Trade (%)</label>
+                        <input type="number" id="riskPct" value="1" step="0.1" oninput="calculateRisk()">
+                    </div>
+                </div>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>Fee Beli (%)</label>
+                        <input type="number" id="feeBeli" value="0.15" step="0.01" oninput="calculateRisk()">
+                    </div>
+                    <div class="input-group">
+                        <label>Fee Jual (%)</label>
+                        <input type="number" id="feeJual" value="0.25" step="0.01" oninput="calculateRisk()">
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>Kode Saham</label>
+                        <input type="text" id="kode" placeholder="Misal: BBCA" oninput="calculateRisk()">
+                    </div>
+                    <div class="input-group">
+                        <label>Harga Beli (Rp)</label>
+                        <input type="number" id="entry" placeholder="0" oninput="calculateRisk()">
+                    </div>
+                </div>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>Stop Loss (Rp)</label>
+                        <input type="number" id="sl" placeholder="0" oninput="calculateRisk()">
+                    </div>
+                    <div class="input-group">
+                        <label>Target Price (Rp)</label>
+                        <input type="number" id="tp" placeholder="0" oninput="calculateRisk()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-grid">
+                    <div class="result-box highlight">
+                        <label>Jumlah Lot Ideal</label>
+                        <div class="result-value" id="outLot">0 Lot</div>
+                    </div>
+                    <div class="result-box">
+                        <label>Risk / Reward Ratio</label>
+                        <div class="result-value" id="outRR">0</div>
+                    </div>
+                    <div class="result-box">
+                        <label>Net Rugi Maksimal (SL)</label>
+                        <div class="result-value val-danger" id="outNetLoss">Rp 0</div>
+                        <div class="fee-info" id="outFeeSL">(Potongan Fee: Rp 0)</div>
+                    </div>
+                    <div class="result-box">
+                        <label>Net Potensi Cuan (TP)</label>
+                        <div class="result-value val-avg" id="outNetProfit">Rp 0</div>
+                        <div class="fee-info" id="outFeeTP">(Potongan Fee: Rp 0)</div>
+                    </div>
+                    <div class="result-box" style="grid-column: span 2;">
+                        <label>Total Modal Dibutuhkan (Termasuk Fee Beli)</label>
+                        <div class="result-value" id="outCapitalUsed">Rp 0</div>
+                    </div>
+                </div>
+                <button onclick="copyJournal()" id="btnCopy">📋 Salin Jurnal Trading</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="header-avg">📉 Kalkulator Average Down</h2>
+        <div class="grid">
+            <div>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>Harga Avg Awal</label>
+                        <input type="number" id="avg1" placeholder="0" oninput="calculateAvgDown()">
+                    </div>
+                    <div class="input-group">
+                        <label>Lot Dimiliki</label>
+                        <input type="number" id="lot1" placeholder="0" oninput="calculateAvgDown()">
+                    </div>
+                </div>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>Harga Beli Baru</label>
+                        <input type="number" id="avg2" placeholder="0" oninput="calculateAvgDown()">
+                    </div>
+                    <div class="input-group">
+                        <label>Lot Baru</label>
+                        <input type="number" id="lot2" placeholder="0" oninput="calculateAvgDown()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-grid">
+                    <div class="result-box highlight-avg">
+                        <label>Harga Avg Baru</label>
+                        <div class="result-value val-avg" id="outNewAvg">Rp 0</div>
+                    </div>
+                    <div class="result-box">
+                        <label>Total Lot Sekarang</label>
+                        <div class="result-value val-avg" id="outTotalLot">0 Lot</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variabel global untuk menyimpan data jurnal
+        let journalData = {};
+
+        const formatRp = (angka) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(angka);
+        };
+
+        function calculateRisk() {
+            const modal = parseFloat(document.getElementById('modal').value) || 0;
+            const riskPct = parseFloat(document.getElementById('riskPct').value) || 0;
+            const feeBeli = parseFloat(document.getElementById('feeBeli').value) || 0;
+            const feeJual = parseFloat(document.getElementById('feeJual').value) || 0;
+            
+            const kode = document.getElementById('kode').value || 'SAHAM';
+            const entry = parseFloat(document.getElementById('entry').value) || 0;
+            const sl = parseFloat(document.getElementById('sl').value) || 0;
+            const tp = parseFloat(document.getElementById('tp').value) || 0;
+
+            let lot = 0; let netLoss = 0; let netProfit = 0; let capitalUsed = 0; let rr = 0;
+            let totalFeeSL = 0; let totalFeeTP = 0;
+
+            if (modal > 0 && riskPct > 0 && entry > 0 && sl > 0 && entry > sl) {
+                const maxRiskNominal = modal * (riskPct / 100);
+                
+                // Harga + Fee
+                const netEntryPerShare = entry * (1 + (feeBeli / 100));
+                const netSlPerShare = sl * (1 - (feeJual / 100));
+                
+                // Selisih per lembar
+                const riskPerShare = netEntryPerShare - netSlPerShare;
+                
+                // Hitung Lot Ideal
+                lot = Math.floor((maxRiskNominal / riskPerShare) / 100);
+                
+                // Modal
+                capitalUsed = lot * 100 * netEntryPerShare;
+                
+                // Hitung Nominal Fee (Beli & Jual SL)
+                const nominalFeeBeli = (lot * 100 * entry) * (feeBeli / 100);
+                const nominalFeeJualSL = (lot * 100 * sl) * (feeJual / 100);
+                totalFeeSL = nominalFeeBeli + nominalFeeJualSL;
+
+                // Net Rugi (Real)
+                netLoss = capitalUsed - (lot * 100 * netSlPerShare);
+
+                // Hitung Profit & Nominal Fee Jual TP
+                if (tp > entry) {
+                    const netTpPerShare = tp * (1 - (feeJual / 100));
+                    const nominalFeeJualTP = (lot * 100 * tp) * (feeJual / 100);
+                    totalFeeTP = nominalFeeBeli + nominalFeeJualTP;
+
+                    netProfit = (lot * 100 * netTpPerShare) - capitalUsed;
+                    rr = (netProfit / netLoss).toFixed(2);
+                }
+            }
+
+            // Simpan ke jurnal
+            journalData = {
+                kode: kode.toUpperCase(), entry: entry, sl: sl, tp: tp, lot: lot, rr: rr,
+                netLoss: netLoss, netProfit: netProfit, capitalUsed: capitalUsed,
+                feeSL: totalFeeSL, feeTP: totalFeeTP
+            };
+
+            // Tampilkan ke UI
+            document.getElementById('outLot').innerText = lot + " Lot";
+            document.getElementById('outNetLoss').innerText = formatRp(netLoss);
+            document.getElementById('outFeeSL').innerText = `(Potongan Fee: ${formatRp(totalFeeSL)})`;
+            
+            document.getElementById('outNetProfit').innerText = formatRp(netProfit);
+            document.getElementById('outFeeTP').innerText = tp > entry ? `(Potongan Fee: ${formatRp(totalFeeTP)})` : `(Potongan Fee: Rp 0)`;
+            
+            document.getElementById('outCapitalUsed').innerText = formatRp(capitalUsed);
+            document.getElementById('outRR').innerText = rr > 0 ? rr + "x" : "-";
+        }
+
+        function copyJournal() {
+            if (journalData.lot === 0 || !journalData.entry) {
+                alert("Isi data Harga Beli dan Stop Loss terlebih dahulu!");
+                return;
+            }
+
+            const textToCopy = `📋 JURNAL TRADING: ${journalData.kode}
+-----------------------------
+🛒 Beli (Entry) : Rp ${journalData.entry}
+🛑 Stop Loss    : Rp ${journalData.sl}
+🎯 Target (TP)  : Rp ${journalData.tp}
+📦 Jumlah Beli  : ${journalData.lot} Lot
+-----------------------------
+💰 Modal Terpakai : ${formatRp(journalData.capitalUsed)}
+📉 Maks. Rugi     : ${formatRp(journalData.netLoss)} (Termasuk Fee: ${formatRp(journalData.feeSL)})
+📈 Potensi Cuan   : ${formatRp(journalData.netProfit)} (Termasuk Fee: ${formatRp(journalData.feeTP)})
+⚖️ Risk / Reward  : ${journalData.rr}x
+-----------------------------`;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = document.getElementById('btnCopy');
+                btn.innerText = "✅ Jurnal Berhasil Disalin!";
+                btn.style.backgroundColor = "#10b981";
+                
+                setTimeout(() => {
+                    btn.innerText = "📋 Salin Jurnal Trading";
+                    btn.style.backgroundColor = "#2563eb";
+                }, 2500);
+            }).catch(err => {
+                alert('Gagal menyalin teks: ', err);
+            });
+        }
+
+        function calculateAvgDown() {
+            const avg1 = parseFloat(document.getElementById('avg1').value) || 0;
+            const lot1 = parseFloat(document.getElementById('lot1').value) || 0;
+            const avg2 = parseFloat(document.getElementById('avg2').value) || 0;
+            const lot2 = parseFloat(document.getElementById('lot2').value) || 0;
+
+            let newAvg = 0; let totalLot = 0;
+
+            if (avg1 > 0 && lot1 > 0 && avg2 > 0 && lot2 > 0) {
+                const capital1 = avg1 * lot1 * 100;
+                const capital2 = avg2 * lot2 * 100;
+                totalLot = lot1 + lot2;
+                newAvg = (capital1 + capital2) / (totalLot * 100);
+            } else if (avg1 > 0 && lot1 > 0) {
+                totalLot = lot1;
+                newAvg = avg1;
+            }
+
+            document.getElementById('outNewAvg').innerText = newAvg > 0 ? formatRp(newAvg) : "Rp 0";
+            document.getElementById('outTotalLot').innerText = totalLot + " Lot";
+        }
+
+        window.onload = function() {
+            calculateRisk();
+            calculateAvgDown();
+        };
+    </script>
+</body>
+</html>
